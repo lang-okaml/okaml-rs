@@ -11,11 +11,14 @@ enum OkmlType {
     Null(*const i32),
 }
 
+enum OkmlValue {
+    Value(OkmlType),
+    SubList(Vec<Okml>), 
+}
 
 struct Okml {
     key: String,
-    value:  OkmlType,
-    // sub_list: Vec<Okml>,
+    value:  OkmlValue,    
 }
 
 
