@@ -9,17 +9,14 @@ enum OkmlType {
     Boolean(bool),
     Integer(i64),
     Float(f64),
+    SubList(Vec<Okml>),
     Null,
 }
-#[derive(Debug)]
-enum OkmlValue {
-    Value(OkmlType),
-    SubList(Vec<Okml>), 
-}
+
 #[derive(Debug)]
 struct Okml {
     key: String,
-    value:  OkmlValue,    
+    value:  OkmlType,    
 }
 
 fn load_from_file(file_path: &str) {
@@ -41,15 +38,18 @@ fn load_from_file(file_path: &str) {
     let mut parent: Vec<Okml> = Default::default();
     let count_braces: u64 = 0;
     
-    for (mut index) in 0..token_len {
+    for (mut index) in 0..token_len-1 {
+	let current = tokens.get(index).unwrap();
+	let mut value = tokens.get(index+1).unwrap();
 	// parse (sub_list_key { )
-	
+	if value == &"{" {
+	    info!("sublist found at {{{current}}}");
+	    // parse_sublist(tokens)
+	} 
 
 	
-	// parse (key: value) || (key : value)
-	let current = tokens.get(index).unwrap();
+	// parse (key: value) 
 	if let Some(':') = current.chars().last() {
-	    let mut value = tokens.get(index+1).unwrap();
 	    if value == &"```" {
 		let mut _current: &str;
 		let mut result: String = Default::default();
@@ -65,7 +65,7 @@ fn load_from_file(file_path: &str) {
 
 		parent.push(Okml{
 		    key: current.to_string(),
-		    value: OkmlValue::Value(OkmlType::String(result.clone()))
+		    value: OkmlType::String(result.clone())
 		});
 		info!("{} => {}", current, result);
 	    } else {
@@ -88,7 +88,7 @@ fn load_from_file(file_path: &str) {
 		// match value
 		parent.push(Okml{
 		    key: current.to_string(),
-		    value: OkmlValue::Value(return_value)
+		    value: (return_value)
 		});
 		info!("{} => {}", current, value);
 	    }
@@ -97,7 +97,7 @@ fn load_from_file(file_path: &str) {
 	}
     }
 
-    println!("{:#?}", parent);
+    // println!("{:#?}", parent);
     
 } 
 
