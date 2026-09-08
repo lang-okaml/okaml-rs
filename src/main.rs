@@ -19,32 +19,101 @@ struct Okml {
     value:  OkmlType,    
 }
 
-fn load_from_file(file_path: &str) {
-    let extension = &file_path[file_path.len()-4..file_path.len()];
-    
-    if extension != "okml" {
-	error!("File is not in .okml {extension}");
-	std::process::exit(-1);
+fn parse_list(tokens: Vec<&str>, mut index: usize) -> (Vec<Okml>, usize) {
+    let mut parent: Vec<Okml> = Default::default();
+    index = index +2;
+    let mut current = tokens.get(index).unwrap();
+    if current  == &"}" {
+	return (parent, index)
     }
-    info!("File: {}", file_path);
+    let mut value = tokens.get(index+1).unwrap();
+    while current != &"}" {
+	current = tokens.get(index).unwrap();
+	value = tokens.get(index+1).unwrap();
+	if current == &"}" || value == &"}" {
+	    break;
+	}
 
-    let content = fs::read_to_string(file_path)
-	.expect("Should've read the file");
+	if value == &"{" {
+	    let mut new_index: usize = 0;
+	    let mut child: Vec<Okml> = Default::default();
+	    (child, new_index) = parse_list(tokens.clone(), index);
+	    parent.push(Okml {
+		key: current.to_string(),
+		value: OkmlType::SubList(child)
+	    });
+	    index = new_index-1;
+	} else {
+	    // println!("{}  => {} ", current, value);
+	    if value == &"```" {
+		let mut _current: &str;
+		let mut result: String = Default::default();
+		while index < tokens.len(){
+		    index = index+1;
+		    _current = tokens.get(index+1).unwrap();
+		    if _current == "```" {
+			break;
+		    }
+		    result.push_str(_current);
+		    result.push_str(" ");
+		} 
 
-    let re = Regex::new(r"[ \t\n]+").unwrap();
-    let tokens: Vec<&str> = re.split(&content).filter(|s| !s.is_empty()).collect();
+		parent.push(Okml{
+		    key: current.to_string(),
+		    value: OkmlType::String(result.clone())
+		});
+		// info!("{} => {}", current, result);
+	    } else {
+		let mut return_value: OkmlType;
+		match value {
+		    &"true" | &"yes" => return_value = OkmlType::Boolean(true),
+		    &"false" | &"no" => return_value = OkmlType::Boolean(false),
+		    &"null" => return_value = OkmlType::Null,
+		    &&_ => {
+			if let Ok(parsed) = value.parse::<i64>() {
+			    return_value = OkmlType::Integer(parsed);
+			} else if let Ok(parsed) = value.parse::<f64>() {
+			    return_value = OkmlType::Float(parsed);
+			} else {
+			    return_value = OkmlType::String(value.to_string());
+			}
+		    }			
+		}
+		// match value
+		parent.push(Okml{
+		    key: current.to_string(),
+		    value: (return_value)
+		});
+	    }
+	}
+	index = index+2;
+    } 
+
+    
+    (parent, index)
+}
+
+fn parse(tokens: Vec<&str>, index: usize) -> (Vec<Okml>, usize) {
     let token_len = tokens.len();
 
     let mut parent: Vec<Okml> = Default::default();
     let count_braces: u64 = 0;
-    
-    for (mut index) in 0..token_len-1 {
+    let mut index = 0;
+    while index < token_len-1 {
 	let current = tokens.get(index).unwrap();
 	let mut value = tokens.get(index+1).unwrap();
 	// parse (sub_list_key { )
 	if value == &"{" {
-	    info!("sublist found at {{{current}}}");
-	    // parse_sublist(tokens)
+	    let mut child: Vec<Okml> = Default::default();
+	    let mut new_index = 0;
+	    (child, new_index) = parse_list(tokens.clone(), index);
+	    let mut child_to_push: Okml = Okml {
+		key: current.to_string(),
+		value: OkmlType::SubList(child)
+	    };
+	    parent.push(child_to_push);
+	    index = new_index-1;
+	    continue;
 	} 
 
 	
@@ -67,7 +136,7 @@ fn load_from_file(file_path: &str) {
 		    key: current.to_string(),
 		    value: OkmlType::String(result.clone())
 		});
-		info!("{} => {}", current, result);
+		// info!("{} => {}", current, result);
 	    } else {
 
 		let mut return_value: OkmlType;
@@ -90,15 +159,33 @@ fn load_from_file(file_path: &str) {
 		    key: current.to_string(),
 		    value: (return_value)
 		});
-		info!("{} => {}", current, value);
+		// info!("{} => {}", current, value);
 	    }
 	} else {
 	    // info!("{}", current);
 	}
+	index +=1
     }
 
-    // println!("{:#?}", parent);
+    return (parent, index)
+}
+
+fn load_from_file(file_path: &str) {
+    let extension = &file_path[file_path.len()-4..file_path.len()];
     
+    if extension != "okml" {
+	error!("File is not in .okml {extension}");
+	std::process::exit(-1);
+    }
+    info!("File: {}", file_path);
+
+    let content = fs::read_to_string(file_path)
+	.expect("Should've read the file");
+
+    let re = Regex::new(r"[ \t\n]+").unwrap();
+    let tokens: Vec<&str> = re.split(&content).filter(|s| !s.is_empty()).collect();
+    let (parsed_ast, _) = parse(tokens, 0);
+    println!("{:#?}", parsed_ast);
 } 
 
 fn main() {
