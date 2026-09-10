@@ -136,7 +136,7 @@ fn parse(tokens: Vec<&str>, index: usize) -> (Vec<Okml>, usize) {
 		    key: current.to_string(),
 		    value: OkmlType::String(result.clone())
 		});
-		// info!("{} => {}", current, result);
+		info!("{} => {}", current, result);
 	    } else {
 
 		let mut return_value: OkmlType;
@@ -159,15 +159,57 @@ fn parse(tokens: Vec<&str>, index: usize) -> (Vec<Okml>, usize) {
 		    key: current.to_string(),
 		    value: (return_value)
 		});
-		// info!("{} => {}", current, value);
+		info!("{} => {}", current, value);
 	    }
 	} else {
-	    // info!("{}", current);
+	    info!("{}", current);
 	}
 	index +=1
     }
 
     return (parent, index)
+}
+
+fn pre_process(mut content: String) -> String{
+   let mut chars: Vec<char> = content.chars().collect();
+   let mut result = Vec::with_capacity(chars.len());
+   let mut next_char: Option<&char>;
+    for (index, &current_char) in chars.iter().enumerate() {
+	next_char = chars.get(index+1);
+	if current_char == ' ' && next_char ==  Some(&':') {
+	    continue;
+	}
+	
+	if current_char == ':'
+            && next_char != Some(&' ')
+            && chars.get(index.wrapping_sub(1)) != Some(&'\\')
+	{
+	    result.push(current_char);
+            result.push(' ');
+	} else if current_char == '{' && chars.get(index-1) != Some(&' '){
+	    result.push(' ');
+	    result.push(current_char);
+	} else if current_char == '`' && (next_char != Some(&'`')) {
+		result.push(current_char);
+		result.push('\n');
+	} else if current_char == '`' && (chars.get(index-1) != Some(&'\n')) {
+	    // result.push('\n');
+	    result.push(current_char);
+	}
+	else {
+	    result.push(current_char);
+	}
+    }
+    
+    chars = result;
+
+
+    // for c in chars {
+    // 	print!("{c}", );
+    // }
+
+    let mut rc: String = chars.into_iter().collect();
+    return rc;
 }
 
 fn load_from_file(file_path: &str) {
@@ -179,11 +221,13 @@ fn load_from_file(file_path: &str) {
     }
     info!("File: {}", file_path);
 
-    let content = fs::read_to_string(file_path)
+    let mut content = fs::read_to_string(file_path)
 	.expect("Should've read the file");
 
+    let mut processed_content = pre_process(content.clone());
+
     let re = Regex::new(r"[ \t\n]+").unwrap();
-    let tokens: Vec<&str> = re.split(&content).filter(|s| !s.is_empty()).collect();
+    let tokens: Vec<&str> = re.split(&processed_content).filter(|s| !s.is_empty()).collect();
     let (parsed_ast, _) = parse(tokens, 0);
     println!("{:#?}", parsed_ast);
 } 
