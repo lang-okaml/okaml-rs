@@ -1,5 +1,10 @@
 [package]
 name = "okaml-rs"
+description = "Rust Parser for Okaml Markup Language"
+readme = "README.md"
+repository = "https://github.com/lang-okaml/okaml-rs"
+license = "MIT"
+authors = ["Venkata Rao Dechiraju", "verade@duck.com"]
 version = "0.1.0"
 edition = "2024"
 
