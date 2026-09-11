@@ -1,0 +1,31 @@
+name: okaml
+version: 0.1.0
+price: 1.1
+somelist {
+	has_key: true
+	this_has: astringvalue
+	sub_lists { 
+		sub_sublists {
+		isSubSub: yes
+		foo: false
+		some_multi: ```
+		this is a very big
+		multi sub list
+		string in a sublist
+		```
+		}
+		try: yes
+	}
+	bar: 123
+	baz: 1204
+}
+
+multi_line: ```
+this
+is
+multi_line
+```
+
+isBad: false
+isWorse: no
+isNull: null

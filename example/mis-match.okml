@@ -1,0 +1,17 @@
+name:okaml
+version : 0.1.0
+price :1.1
+somehow:this\:\:belongs
+somelist{
+	has_key: true
+	this_has: astringvalue
+	sub_lists { sub_sublists {
+		isSubSub: yes
+		} }
+	bar: 123
+	baz: 1204
+}
+
+multi_line:```this
+is multi_line``` 
+
