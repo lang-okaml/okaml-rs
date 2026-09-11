@@ -1,5 +1,5 @@
 [package]
-name = "okaml-rs"
+name = "okaml"
 description = "Rust Parser for Okaml Markup Language"
 readme = "README.md"
 repository = "https://github.com/lang-okaml/okaml-rs"
