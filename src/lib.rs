@@ -12,6 +12,47 @@ pub enum OkmlType {
     Null,
 }
 
+impl OkmlType {
+    pub fn unwrap_string(&self) -> &String {
+        match self {
+            OkmlType::String(s) => s,
+            _ => panic!("called `unwrap_string` on a non-String value"),
+        }
+    }
+
+    pub fn unwrap_bool(&self) -> bool {
+        match self {
+            OkmlType::Boolean(b) => *b,
+            _ => panic!("called `unwrap_bool` on a non-Boolean value"),
+        }
+    }
+
+    pub fn unwrap_integer(&self) -> i64 {
+        match self {
+            OkmlType::Integer(i) => *i,
+            _ => panic!("called `unwrap_integer` on a non-Integer value"),
+        }
+    }
+
+    pub fn unwrap_float(&self) -> f64 {
+        match self {
+            OkmlType::Float(f) => *f,
+            _ => panic!("called `unwrap_float` on a non-Float value"),
+        }
+    }
+
+    pub fn unwrap_sublist(&self) -> &Vec<Okml> {
+        match self {
+            OkmlType::SubList(v) => v,
+            _ => panic!("called `unwrap_sublist` on a non-SubList value"),
+        }
+    }
+
+    pub fn is_null(&self) -> bool {
+        matches!(self, OkmlType::Null)
+    }
+}
+
 #[derive(Debug)]
 pub struct Okml {
     key: String,
@@ -38,12 +79,23 @@ impl Okml {
 	let (parsed_ast, _) = parse(tokens, 0);
 	parsed_ast
     } 
+
     pub fn read_from_string(content: &str) -> Vec<Okml> {
 	let mut processed_content = pre_process(content.to_string());	
 	let re = Regex::new(r"[ \t\n]+").unwrap();
 	let tokens: Vec<&str> = re.split(&processed_content).filter(|s| !s.is_empty()).collect();
 	let (parsed_ast, _) = parse(tokens, 0);
 	parsed_ast	
+    }
+
+    pub fn key(&self) -> &str{
+	let key = &self.key;
+	return &key[..key.len()-1]
+    }
+
+
+    pub fn value(&self) -> &OkmlType {
+	return &self.value
     }
 }
 
@@ -185,7 +237,6 @@ fn parse_list(tokens: Vec<&str>, mut index: usize) -> (Vec<Okml>, usize) {
 	    });
 	    index = new_index-1;
 	} else {
-	    // println!("{}  => {} ", current, value);
 	    if value == &"```" {
 		let mut _current: &str;
 		let mut result: String = Default::default();

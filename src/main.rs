@@ -4,5 +4,8 @@ use okaml::Okml;
 fn main() {
     let file_path = "../example/syntax.okml";
     let parsed_ast:Vec<Okml> = Okml::read_from_file(file_path);
-    println!("{:?}", parsed_ast);
+    // println!("{:?}", parsed_ast);
+    for item in parsed_ast {
+	println!("{} {:?}", item.key(), item.value());
+    }
 }
